@@ -39,7 +39,6 @@ export class MappingUtilities {
         }
         
         const updatedData = await entity.entity.update(actorData);
-        console.error(updatedData);
         
         // Passives
         const passives = importJson.passives.map(passive => {
@@ -61,7 +60,6 @@ export class MappingUtilities {
         
         // Abilities
         const abilities = importJson.abilities.map(ability => {
-            console.log(ability);
             return {
                 name: ability.name,
                 type: "equippableItem",
@@ -103,7 +101,6 @@ export class MappingUtilities {
         let createdAbilities = await Item.createDocuments(abilities, { parent: entity.entity });
         createdAbilities.forEach(newPassive => newPassive._templateSystem.reloadTemplate());
         
-        console.error(entity);
         await entity.reloadTemplate();
     }
     

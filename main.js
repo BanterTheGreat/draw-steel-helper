@@ -60,8 +60,7 @@ Hooks.on("init", () => {
   ];
 
   CONFIG.statusEffects = CONFIG.statusEffects.filter(x => !effectsToDelete.includes(x.id));
-
-    CONFIG.statusEffects = CONFIG.statusEffects.concat(newEffects);
+  CONFIG.statusEffects = CONFIG.statusEffects.concat(newEffects);
 });
 
 // Automatically roll for resource on turn start.

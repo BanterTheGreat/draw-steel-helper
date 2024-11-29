@@ -463,7 +463,6 @@ export class DrawSteelHelper {
     const message = game.messages.get(id);
     if (message) {
       await message.update({...newMessage});
-
     }
   }
 }
