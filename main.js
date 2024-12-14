@@ -1,90 +1,39 @@
-import { DrawSteelHelper } from "./DrawSteelHelper.js";
-import { EnemyImporter } from "./EnemyImporter.js";
+import { AbilityHelper } from "./ability-helper.js";
+import { ResourceHelper } from "./resource-helper.js";
+import { SystemHelper } from "./system-helper.js";
+import {SocketHelper} from "./socket-helper.js";
 
-const drawSteelHelper = new DrawSteelHelper();
+const abilityHelper = new AbilityHelper();
+const resourceHelper = new ResourceHelper();
+const systemHelper = new SystemHelper();
+const socketHelper = new SocketHelper();
 let socket;
 
 //SocketLib; Required for editing chat messages as users for rolls.
 Hooks.once("socketlib.ready", () => {
 	socket = socketlib.registerModule("draw-steel-helper");
-	socket.register("deleteMessage", drawSteelHelper.deleteMessage);
-	socket.register("updateMessage", drawSteelHelper.updateMessage);
+	socket.register("deleteMessage", socketHelper.deleteMessage);
+	socket.register("updateMessage", socketHelper.updateMessage);
 });
 
 // Replace Conditions with Draw Steel variants.
 Hooks.on("init", () => {
-  const effectsToDelete = [
-    'unconscious',
-    'sleep',
-    'stun',
-    'prone',
-    'restrain',
-    'paralysis',
-    'deaf',
-    'silence',
-    'fear',
-    'burning',
-    'frozen',
-    'shock',
-    'corrode',
-    'bleeding',
-    'disease',
-    'poison',
-    'curse',
-    'regen',
-    'degen',
-    'upgrade',
-    'downgrade',
-    'target',
-    'eye',
-    'bless',
-    'fireShield',
-    'coldShield',
-    'magicShield',
-    'holyShield'
-  ];
-
-  const newEffects = [
-    {id: 'bleeding', name: 'Bleeding', img: 'icons/svg/blood.svg'},
-    {id: 'dazed', name: 'Dazed', img: 'icons/svg/daze.svg'},
-    {id: 'frightened', name: 'Frightened', img: 'icons/svg/terror.svg'},
-    {id: 'grabbed', name: 'Grabbed', img: 'icons/svg/net.svg'},
-    {id: 'prone', name: 'Prone', img: 'icons/svg/falling.svg'},
-    {id: 'restrained', name: 'Restrained', img: 'icons/svg/net.svg'},
-    {id: 'slowed', name: 'Slowed', img: 'icons/svg/degen.svg'},
-    {id: 'taunted', name: 'Taunted', img: 'icons/svg/target.svg'},
-    {id: 'weakened', name: 'Weakened', img: 'icons/svg/poison.svg'},
-    {id: 'judged', name: 'Judged', img: 'icons/svg/bones.svg'},
-    {id: 'stats-down', name: 'Stats Down', img: 'icons/svg/down.svg'},
-    {id: 'stats-up', name: 'Stats Up', img: 'icons/svg/up.svg'},
-    {id: 'disguised', name: 'Disguised', img: 'icons/svg/mystery-man.svg'}
-  ];
-
-  CONFIG.statusEffects = CONFIG.statusEffects.filter(x => !effectsToDelete.includes(x.id));
-  CONFIG.statusEffects = CONFIG.statusEffects.concat(newEffects);
+  systemHelper.replaceConditionList();
 });
 
 // Automatically roll for resource on turn start.
 Hooks.on("updateCombat", async (combat) => {
-  drawSteelHelper.triggerResourceRoll(combat);
+  await resourceHelper.rollResourceGainOnTurnStart(combat);
 });
 
 // Automatically display gained Malice on round start.
 Hooks.on("combatRound", async (combat) => {
-  if (!game.user.isGM) {
-    return;
-  }
-
-  drawSteelHelper.getMalice(combat);
+  await resourceHelper.getMaliceOnRoundStart(combat);
 });
 
 // Automatically display gained Malice on combat start.
 Hooks.on("combatStart", async (combat) => {
-  if (!game.user.isGM) {
-    return;
-  }
-
-  drawSteelHelper.getMalice(combat);
+  await resourceHelper.getMaliceOnRoundStart(combat);
 });
 
 // Add functionalities to the chat buttons.
@@ -94,7 +43,7 @@ Hooks.on("renderChatMessage", async (message, html) => {
     .off()
     .on("click", async (evt) => {
         evt.preventDefault();
-        drawSteelHelper.applyDamage(message);
+        abilityHelper.applyDamage(message);
         // await message.update({content: "This is a test"});
     });
 
@@ -106,10 +55,14 @@ Hooks.on("renderChatMessage", async (message, html) => {
           .off()
           .on("click", async (evt) => {
               evt.preventDefault();
-              await drawSteelHelper.rollAbility(message, socket);
+              await abilityHelper.rollAbility(message, socket);
           });
   }
 });
 
+Hooks.on("renderChatMessage", async (message, html) => {
+    await resourceHelper.onClickGainResourceButton(message, html, socket);
+});
+
 // Allow us to use the functions within Foundry itself as well. Required for a few fields inside the Module.
-window.DrawSteelHelper = new DrawSteelHelper();
+window.DrawSteelHelper = new AbilityHelper();

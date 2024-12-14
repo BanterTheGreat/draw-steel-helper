@@ -1,7 +1,7 @@
-import {EnemyImporter} from "./EnemyImporter.js";
+import {EnemyImporter} from "./enemy-importer.js";
 import {MappingUtilities} from "./MappingUtilities.js";
 
-export class DrawSteelHelper {
+export class AbilityHelper {
   async rollAbility(message, socket) {
     // Create the dialog
     new Dialog({
@@ -261,47 +261,6 @@ export class DrawSteelHelper {
     });
   }
 
-  getMalice(combat) {
-    const combatants = combat.combatants;
-    const playerCombatants = combatants.filter(combatant => !!combatant.actor.system.props?.mcdm_class_name);
-    const allVictories = playerCombatants.reduce((sum, combatant) => sum + (+combatant.actor.system.props?.mcdm_victories_current ?? 0), 0);
-    const avgVictories = Math.floor(allVictories / playerCombatants.length);
-
-    const malice = playerCombatants.length + avgVictories + combat.round + 1; // Combat round is zero indexed;
-
-    const messageData = {
-      flavor: `<h3><strong>The Battle Intensifies!</h3></strong>`,
-      content: `<div>Enemies brim with dark intent as they gain <b>${malice}</b> Malice!</div>`
-    };
-
-    ChatMessage.create(messageData);
-  }
-
-  async triggerResourceRoll(combat) {
-    if (!game.user.isGM) {
-      return;
-    }
-
-    const currentActor = combat.combatant.actor;
-    const currentActorProps = currentActor.system.props;
-
-    if (!!currentActorProps?.mcdm_class_name) {
-      let roll = await new Roll(currentActorProps?.mcdm_resource_turn ?? "1d3").evaluate({ async: true});
-
-      const flavorText = currentActorProps?.mcdm_resource_turn_flavor ?? ` gains ${currentActorProps?.mcdm_resource}`;
-
-      roll.toMessage({
-        flavor: `<h3><strong>${currentActor.name} ${flavorText}</h3></strong>`,
-        rollMode: game.settings.get("core", "rollMode"),
-        speaker: {
-          alias: currentActor.name,
-          actor: game.actors.getName(currentActor.name)
-        },
-        content: `<hr><pg>${await roll.render()}</pg>`,
-      });
-    }
-  }
-
   // Methods used inside scripts themselves
   getActionSummary(entity, linkedEntity) {
     const isCollapsed = linkedEntity.system.props.mcdm_action_collapsed;
@@ -449,20 +408,5 @@ export class DrawSteelHelper {
       },
       default: "import",
     }).render(true, { width: 700, height: 600 });
-  }
-
-  // SocketLib helpscripts. Only used by GMs
-  async deleteMessage(id) {
-    const message = game.messages.get(id);
-    if(message) {
-      await message.delete();
-    }
-  }
-
-  async updateMessage(id, newMessage) {
-    const message = game.messages.get(id);
-    if (message) {
-      await message.update({...newMessage});
-    }
   }
 }
