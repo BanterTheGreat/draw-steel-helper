@@ -55,8 +55,9 @@ Hooks.on("init", () => {
     {id: 'taunted', name: 'Taunted', img: 'icons/svg/target.svg'},
     {id: 'weakened', name: 'Weakened', img: 'icons/svg/poison.svg'},
     {id: 'judged', name: 'Judged', img: 'icons/svg/bones.svg'},
-    {id: 'stats-down', name: 'Stats Down', img: 'icons/svg/stoned.svg'},
-    {id: 'stats-up', name: 'Stats Up', img: 'icons/svg/sword.svg'}
+    {id: 'stats-down', name: 'Stats Down', img: 'icons/svg/down.svg'},
+    {id: 'stats-up', name: 'Stats Up', img: 'icons/svg/up.svg'},
+    {id: 'disguised', name: 'Disguised', img: 'icons/svg/mystery-man.svg'}
   ];
 
   CONFIG.statusEffects = CONFIG.statusEffects.filter(x => !effectsToDelete.includes(x.id));
