@@ -20,8 +20,6 @@ Hooks.on("init", SystemHelper.replaceConditionList);
 
 // Automatically roll for resource on turn start.
 Hooks.on("updateCombat", ResourceHelper.rollResourceGainOnTurnStart);
-
-// Automatically display gained Malice on round start.
 Hooks.on("combatRound", ResourceHelper.getMaliceOnRoundStart);
 Hooks.on("combatStart", ResourceHelper.getMaliceOnRoundStart);
 

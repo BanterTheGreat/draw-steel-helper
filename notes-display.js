@@ -28,7 +28,8 @@ export class NotesDisplay {
     }
     
     get gridScale() {
-        return 1;
+        console.log(canvas.scene.dimensions.size);
+        return canvas.scene.dimensions.size / 100;
     }
     
     get fontSize() {
@@ -46,7 +47,7 @@ export class NotesDisplay {
             const { desc, color, stroke } = { desc: token?.document.flags["token-notes"]?.notes ?? "", color: "#ffffff", stroke: "#000000" };
             if (desc !== undefined && color && stroke) {
                 const { width } = token.getSize();
-                const y = -2 + 35; // 25 = this.height;
+                const y = -2 + (35 * this.gridScale); // 25 = this.height;
                 const position = 2;
                 const x = (width / 2) * position;
                 const config = { desc, color, stroke, width, x, y };
@@ -86,7 +87,7 @@ export class NotesDisplay {
         token.notesDisplay.anchor.set(0.5, 1);
         
         var lineCount = desc.split("\n").length - 1;
-        token.notesDisplay.position.set(width / 2, x + y + (lineCount * (this.fontSize + padding)) + (hovering ? 24 : 0));
+        token.notesDisplay.position.set(width / 2, x + y + (lineCount * ((this.fontSize * this.gridScale) + padding)) + (hovering ? 24 : 0));
     }
 
     _updateNotesDisplay(token, config = {}, hovering = false) {
@@ -99,6 +100,6 @@ export class NotesDisplay {
         token.notesDisplay.visible = true;
         
         var lineCount = desc.split("\n").length - 1;
-        token.notesDisplay.position.set(width / 2, x + y + (lineCount * (this.fontSize + padding)) + (hovering ? 24 : 0));
+        token.notesDisplay.position.set(width / 2, x + y + (lineCount * ((this.fontSize * this.gridScale) + padding)) + (hovering ? 24 : 0));
     }
 }
