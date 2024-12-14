@@ -1,5 +1,5 @@
 export class SystemHelper {
-    replaceConditionList() {
+    static replaceConditionList() {
         const effectsToDelete = [
             'unconscious',
             'sleep',

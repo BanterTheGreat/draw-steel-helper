@@ -1,7 +1,7 @@
 
 // Manages the logic that handles resources + malice.
 export class ResourceHelper {
-    async rollResourceGainOnTurnStart(combat) {
+    static async rollResourceGainOnTurnStart(combat) {
         if (!game.user.isGM) {
             return;
         }
@@ -39,7 +39,7 @@ export class ResourceHelper {
         }
     }
     
-    async onClickGainResourceButton(message, html, socket) {
+    static async onClickGainResourceButton(message, html, socket) {
         html.find("button#gainResourceButton")
             .off()
             .on("click", async (evt) => {
@@ -48,7 +48,7 @@ export class ResourceHelper {
             });
     }
     
-    async addResources(message, socket) {
+    static async addResources(message, socket) {
         console.log("Pressed button!")
         
         const flags = message.flags.addResource;
@@ -86,7 +86,7 @@ export class ResourceHelper {
         
     }
     
-    async getMaliceOnRoundStart(combat) {
+    static async getMaliceOnRoundStart(combat) {
         if (!game.user.isGM) {
             // Non-GMs don't gain malice.
             return;

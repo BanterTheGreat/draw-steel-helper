@@ -4,37 +4,25 @@ import { SystemHelper } from "./system-helper.js";
 import {SocketHelper} from "./socket-helper.js";
 
 const abilityHelper = new AbilityHelper();
-const resourceHelper = new ResourceHelper();
-const systemHelper = new SystemHelper();
 const socketHelper = new SocketHelper();
 let socket;
 
 //SocketLib; Required for editing chat messages as users for rolls.
 Hooks.once("socketlib.ready", () => {
 	socket = socketlib.registerModule("draw-steel-helper");
-	socket.register("deleteMessage", socketHelper.deleteMessage);
-	socket.register("updateMessage", socketHelper.updateMessage);
+	socket.register("deleteMessage", SocketHelper.deleteMessage);
+	socket.register("updateMessage", SocketHelper.updateMessage);
 });
 
 // Replace Conditions with Draw Steel variants.
-Hooks.on("init", () => {
-  systemHelper.replaceConditionList();
-});
+Hooks.on("init", SystemHelper.replaceConditionList);
 
 // Automatically roll for resource on turn start.
-Hooks.on("updateCombat", async (combat) => {
-  await resourceHelper.rollResourceGainOnTurnStart(combat);
-});
+Hooks.on("updateCombat", ResourceHelper.rollResourceGainOnTurnStart);
 
 // Automatically display gained Malice on round start.
-Hooks.on("combatRound", async (combat) => {
-  await resourceHelper.getMaliceOnRoundStart(combat);
-});
-
-// Automatically display gained Malice on combat start.
-Hooks.on("combatStart", async (combat) => {
-  await resourceHelper.getMaliceOnRoundStart(combat);
-});
+Hooks.on("combatRound", ResourceHelper.getMaliceOnRoundStart);
+Hooks.on("combatStart", ResourceHelper.getMaliceOnRoundStart);
 
 // Add functionalities to the chat buttons.
 Hooks.on("renderChatMessage", async (message, html) => {
@@ -60,9 +48,9 @@ Hooks.on("renderChatMessage", async (message, html) => {
   }
 });
 
-Hooks.on("renderChatMessage", async (message, html) => {
-    await resourceHelper.onClickGainResourceButton(message, html, socket);
-});
+Hooks.on("renderChatMessage", (message, html) => ResourceHelper.onClickGainResourceButton(message, html, socket));
+
 
 // Allow us to use the functions within Foundry itself as well. Required for a few fields inside the Module.
+// Never ever remove this until we are absolutely sure this isn't used anywhere anymore.
 window.DrawSteelHelper = new AbilityHelper();
