@@ -185,7 +185,7 @@ export class AbilityHelper {
     const userCharacter = game.user.character;
     const controlledTokens = canvas.tokens.controlled;
     let actorsToDamage = [];
-    const damage = message.flags.applyDamage;
+    let damage = message.flags.applyDamage;
 
     if (controlledTokens.length > 0) {
       // actor.system.props;
@@ -207,15 +207,29 @@ export class AbilityHelper {
       return;
     }
     
-
     actorsToDamage.forEach(actor => {
-      console.log(actor);
-      const currentHealth = actor.system.props.mcdm_stamina_current;
-      const windedHealth = actor.system.props.mcdm_stamina_winded ?? 0;
-      const minHealth = actor.system.props.mcdm_stamina_winded ? -actor.system.props.mcdm_stamina_winded : 0;
-      let newHealth = currentHealth - damage;
+      let damageCalc = damage;
       const isNPC = actor.system.props.mcdm_enemy === "true";
+      const minHealth = actor.system.props.mcdm_stamina_winded ? -actor.system.props.mcdm_stamina_winded : 0;
+      
+      const currentHealth = actor.system.props.mcdm_stamina_current;
+      let newHealth = currentHealth;
+      
+      const currentTempHealth = actor.system.props.mcdm_stamina_temp ?? 0;
+      let newTempHealth = currentTempHealth;
 
+      // First, subtract damage from TempHealth, but TempHealth cannot go below 0
+      if (damageCalc <= currentTempHealth) {
+        newTempHealth -= damageCalc;  // If the damage is less than or equal to TempHealth, just subtract it
+        damageCalc = 0;  // No more damage left to apply to Health
+      } else {
+        damageCalc -= currentTempHealth;  // The remaining damage after TempHealth is depleted
+        newTempHealth = 0;  // TempHealth becomes 0
+      }
+
+      // Then, subtract the remaining damage from Health (Health can go negative)
+      newHealth = currentHealth - damageCalc;
+      
       if (newHealth < minHealth) {
         newHealth = minHealth;
       }
@@ -225,7 +239,13 @@ export class AbilityHelper {
 
       // Check if the character loses temporary stamina and takes damage
       if (damage > 0) {
-        messages.push(`${actor.name} takes ${damage} damage, they got ${newHealth} stamina left.`);
+        messages.push(`${actor.name} takes ${damage} damage,`);
+        
+        if (newTempHealth < currentTempHealth) {
+          messages.push(`they got ${newTempHealth} temporary stamina and ${newHealth} stamina left.`);
+        } else {
+          messages.push(`they got ${newHealth} stamina left.`);
+        }
       }
 
       // Check if the character is winded
@@ -244,6 +264,7 @@ export class AbilityHelper {
       }
 
       actor.system.props.mcdm_stamina_current = newHealth;
+      actor.system.props.mcdm_stamina_temp = newTempHealth;
       actor.reloadTemplate();
 
       const privateMessage = (game.user.isGM && isNPC) ? [game.user.id] : [];
