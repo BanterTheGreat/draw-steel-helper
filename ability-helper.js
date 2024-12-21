@@ -29,7 +29,6 @@ export class AbilityHelper {
                 <label><input type="radio" name="surge" value="1"> 1</label>
                 <label><input type="radio" name="surge" value="2"> 2</label>
                 <label><input type="radio" name="surge" value="3"> 3</label>
-                <label><input type="radio" name="surge" value="4"> 4</label>
             </div>
           </div>
         </form>
@@ -42,7 +41,6 @@ export class AbilityHelper {
             let html;
             let modifier = parseInt(dialogHtml.find('[name="modifier"]').val()) || 0;
             const surges = parseInt(dialogHtml.find("input[name='surge']:checked").val()) || 0;
-            console.log(surges);
             let effect = dialogHtml.find('[name="effect"]').val();
     
             // Set ability modifier
@@ -161,10 +159,10 @@ export class AbilityHelper {
             const damages = [damage.tier_1, damage.tier_2, damage.tier_3];
             const damageToTake = damages[tier - 1];
             
-            const damageText = damageToTake + (surges === 0 ? "" : (" + " + "⚡".repeat(surges)));
+            const damageText = damageToTake + (surges === 0 ? "" : (" + " + (surges * 2) + ` (${surges} surges)`));
 
             if (!!damageToTake && damageToTake > 0) {
-              newContent += `<hr><button id="damageButton">Take ${damageText} Damage</button>`;
+              newContent += `<hr><button id="damageButton">Take ${damageText} damage</button>`;
             } 
 
             await socket.executeAsGM("updateMessage", message.id, {...message, content: newContent, flags: { applyDamage: damageToTake + (2 * surges) }});
@@ -307,6 +305,9 @@ export class AbilityHelper {
     const tier1_damage = linkedEntity.system.props.mcdm_action_low_damage;
     const tier2_damage = linkedEntity.system.props.mcdm_action_mid_damage;
     const tier3_damage = linkedEntity.system.props.mcdm_action_high_damage;
+    const tier1_damage_modifier = linkedEntity.system.props.mcdm_action_damage_low_modifier ?? "None";
+    const tier2_damage_modifier = linkedEntity.system.props.mcdm_action_damage_mid_modifier ?? "None";
+    const tier3_damage_modifier = linkedEntity.system.props.mcdm_action_damage_high_modifier ?? "None";
     const cost = linkedEntity.system.props.mcdm_action_cost;
     const distance = linkedEntity.system.props.mcdm_action_distance;
     const target = linkedEntity.system.props.mcdm_action_target;
@@ -319,39 +320,69 @@ export class AbilityHelper {
 
     let html = !!description ? `<i>${description}</i><br>` : '';
 
-    let tier1DamageBonus = 0;
-    let tier2DamageBonus = 0;
-    let tier3DamageBonus = 0;
+    let tier1KitDamageBonus = 0;
+    let tier2KitDamageBonus = 0;
+    let tier3KitDamageBonus = 0;
+
+    if (use_kit === true) {
+      switch (attack_type) {
+        case ("melee"):
+          tier1KitDamageBonus = tier1_melee;
+          tier2KitDamageBonus = tier2_melee;
+          tier3KitDamageBonus = tier3_melee;
+          break;
+        case ("ranged"):
+          tier1KitDamageBonus = tier1_ranged;
+          tier2KitDamageBonus = tier2_ranged;
+          tier3KitDamageBonus = tier3_ranged;
+          break;
+      }
+    }
+
+    const tier1KitDamageBonusText = tier1KitDamageBonus != 0 ? `+ ${tier1KitDamageBonus}`: "";
+    const tier2KitDamageBonusText = tier2KitDamageBonus != 0 ? `+ ${tier2KitDamageBonus}`: "";
+    const tier3KitDamageBonusText = tier3KitDamageBonus != 0 ? `+ ${tier3KitDamageBonus}`: "";
+
+    const GetModifier = (type) => {
+      console.log(type);
+      switch (type) {
+        case "Might":
+          return {abbreviation: "M"};
+        case "Agility":
+          return {abbreviation: "A"};
+        case "Presence":
+          return {abbreviation: "P"};
+        case "Intuition":
+          return {abbreviation: "I"};
+        case "Reason":
+          return {abbreviation: "R"};
+        case "None":
+          return {abbreviation: ""};
+      }
+    }
+
+    const tier1Modifier = GetModifier(tier1_damage_modifier);
+    const tier2Modifier = GetModifier(tier2_damage_modifier);
+    const tier3Modifier = GetModifier(tier3_damage_modifier);
+
+    const tier1ModifierBonusText = tier1Modifier.abbreviation !== "" ? `+ ${tier1Modifier.abbreviation}`: "";
+    const tier2ModifierBonusText = tier2Modifier.abbreviation !== "" ? `+ ${tier2Modifier.abbreviation}`: "";
+    const tier3ModifierBonusText = tier3Modifier.abbreviation !== "" ? `+ ${tier3Modifier.abbreviation}`: "";
 
     let tier1DamageText = '';
     let tier2DamageText = '';
     let tier3DamageText = '';
 
-    if (use_kit === true) {
-      switch (attack_type) {
-        case ("melee"):
-          tier1DamageBonus = tier1_melee;
-          tier2DamageBonus = tier2_melee;
-          tier3DamageBonus = tier3_melee;
-          break;
-        case ("ranged"):
-          tier1DamageBonus = tier1_ranged;
-          tier2DamageBonus = tier2_ranged;
-          tier3DamageBonus = tier3_ranged;
-          break;
-      }
-    }
-    
     if (tier1_damage != 0) {
-      tier1DamageText = tier1_damage + `${tier1DamageBonus != 0 ? ` + ${tier1DamageBonus}` : ""} ${tier1_type} damage;`;
+      tier1DamageText = tier1_damage + `${tier1KitDamageBonusText} ${tier1ModifierBonusText}`.trimEnd() + ` ${tier1_type} damage;`;
     }
-    
+
     if (tier2_damage != 0) {
-      tier2DamageText = tier2_damage + `${tier2DamageBonus != 0 ? ` + ${tier2DamageBonus}` : ""} ${tier2_type} damage;`;
+      tier2DamageText = tier2_damage + `${tier2KitDamageBonusText} ${tier2ModifierBonusText}`.trimEnd() + ` ${tier2_type} damage;`;
     }
-    
+
     if (tier3_damage != 0) {
-      tier3DamageText = tier3_damage + `${tier3DamageBonus != 0 ? ` + ${tier3DamageBonus}` : ""} ${tier3_type} damage;`;
+      tier3DamageText = tier3_damage + `${tier3KitDamageBonusText} ${tier3ModifierBonusText}`.trimEnd() + ` ${tier3_type} damage;`;
     }
 
     const showInfoBlock = keywords || distance || target || cost || trigger;
@@ -395,6 +426,219 @@ export class AbilityHelper {
     }
     
     return html
+  }
+  
+  sendActionToChat(entity, linkedEntity) {
+    let actorName = entity.name;
+    let name = linkedEntity.name;
+    const description = linkedEntity.system.props.mcdm_action_description;
+    const title1 = linkedEntity.system.props.mcdm_action_extra_effect_title_1;
+    const text1 = linkedEntity.system.props.mcdm_action_extra_effect_description_1;
+    const title2 = linkedEntity.system.props.mcdm_action_extra_effect_title_2;
+    const text2 = linkedEntity.system.props.mcdm_action_extra_effect_description_2;
+    const attack_type = linkedEntity.system.props.mcdm_action_attack_type;
+    const tier1_melee = entity.entity.system.props.mcdm_kit_melee_low ?? 0;
+    const tier2_melee = entity.entity.system.props.mcdm_kit_melee_mid ?? 0;
+    const tier3_melee = entity.entity.system.props.mcdm_kit_melee_high ?? 0;
+    const tier1_ranged = entity.entity.system.props.mcdm_kit_ranged_low ?? 0;
+    const tier2_ranged = entity.entity.system.props.mcdm_kit_ranged_mid ?? 0;
+    const tier3_ranged = entity.entity.system.props.mcdm_kit_ranged_high ?? 0;
+    const rollType = linkedEntity.system.props.mcdm_action_roll_type;
+    const tier1_damage = linkedEntity.system.props.mcdm_action_low_damage;
+    const tier2_damage = linkedEntity.system.props.mcdm_action_mid_damage;
+    const tier3_damage = linkedEntity.system.props.mcdm_action_high_damage;
+    const tier1_type = linkedEntity.system.props.mcdm_action_damage_low_type;
+    const tier2_type = linkedEntity.system.props.mcdm_action_damage_mid_type;
+    const tier3_type = linkedEntity.system.props.mcdm_action_damage_high_type;
+    const tier1_extra = linkedEntity.system.props.mcdm_action_low_text;
+    const tier2_extra = linkedEntity.system.props.mcdm_action_mid_text;
+    const tier3_extra = linkedEntity.system.props.mcdm_action_high_text;
+    const tier1_damage_modifier = linkedEntity.system.props.mcdm_action_damage_low_modifier;
+    const tier2_damage_modifier = linkedEntity.system.props.mcdm_action_damage_mid_modifier;
+    const tier3_damage_modifier = linkedEntity.system.props.mcdm_action_damage_high_modifier;
+    const distance = linkedEntity.system.props.mcdm_action_distance;
+    const target = linkedEntity.system.props.mcdm_action_target;
+    const type = linkedEntity.system.props.mcdm_action_type;
+    const keywords = linkedEntity.system.props.mcdm_action_keywords;
+    const cost = linkedEntity.system.props.mcdm_action_cost;
+    const roll_modifier = linkedEntity.system.props.mcdm_action_modifier;
+    const might = entity.entity.system.props.mcdm_might ?? 0;
+    const agility = entity.entity.system.props.mcdm_agility ?? 0;
+    const reason = entity.entity.system.props.mcdm_reason ?? 0;
+    const intuition = entity.entity.system.props.mcdm_intuition ?? 0; 
+    const presence = entity.entity.system.props.mcdm_presence ?? 0;
+    const trigger = linkedEntity.system.props.mcdm_action_trigger;
+    const use_kit = linkedEntity.system.props.mcdm_action_kit;
+
+    var html = "";
+    var hasPowerRoll = rollType != 'power';
+    var rollMode = game.settings.get("core", "rollMode");
+    var gmUserIds = game.users.filter(user => user.isGM).map(user => user.id);
+
+    // Begin the description block
+    var showInfoBlock = keywords || distance || target || cost;
+    html += `<div><i>${description}</i></div> <hr>`;
+
+    if (showInfoBlock) {
+      html += `<div>`;
+      !!type ? html += `<div><b>Type:</b> ${type}<br></div>` : '';
+      !!keywords ? html += `<div><b>Keywords:</b> ${keywords}<br></div>` : '';
+      !!target ? html += `<div><b>Target:</b> ${target}<br></div>` : '';
+      !!distance ? html += `<div><b>Distance:</b> ${distance}<br></div>` : '';
+      !!trigger ? html +=  `<div><b>Trigger:</b> ${trigger}<br></div>` : '';
+      html += `</div>`;
+    }
+
+    html += '<span style="display:none;">ROLL_DATA</span>';
+
+    // Begin the table creation for damage rolls
+    var tier1KitDamageBonus = 0;
+    var tier2KitDamageBonus = 0;
+    var tier3KitDamageBonus = 0;
+
+    var tier1DamageText = '';
+    var tier2DamageText = '';
+    var tier3DamageText = '';
+
+    if (use_kit === "true") {
+      switch (attack_type) {
+        case ("melee"):
+          tier1KitDamageBonus = tier1_melee;
+          tier2KitDamageBonus = tier2_melee;
+          tier3KitDamageBonus = tier3_melee;
+          break;
+        case ("ranged"):
+          tier1KitDamageBonus = tier1_ranged;
+          tier2KitDamageBonus = tier2_ranged;
+          tier3KitDamageBonus = tier3_ranged;
+          break;
+      }
+    }
+
+    const tier1KitDamageBonusText = tier1KitDamageBonus != 0 ? `+ ${tier1KitDamageBonus}`: "";
+    const tier2KitDamageBonusText = tier2KitDamageBonus != 0 ? `+ ${tier2KitDamageBonus}`: "";
+    const tier3KitDamageBonusText = tier3KitDamageBonus != 0 ? `+ ${tier3KitDamageBonus}`: "";
+    
+    const GetModifier = (type) => {
+      switch (type) {
+        case "Might":
+          return {abbreviation: "M", modifier: might};
+        case "Agility":
+          return {abbreviation: "A", modifier: agility};
+        case "Presence":
+          return {abbreviation: "P", modifier: presence};
+        case "Intuition":
+          return {abbreviation: "I", modifier: intuition};
+        case "Reason":
+          return {abbreviation: "R", modifier: reason};
+        case "None":
+          return {abbreviation: "", modifier: 0};
+      }
+    }
+
+    const tier1Modifier = GetModifier(tier1_damage_modifier);
+    const tier2Modifier = GetModifier(tier2_damage_modifier);
+    const tier3Modifier = GetModifier(tier3_damage_modifier);
+    
+    const tier1ModifierBonusText = tier1Modifier.abbreviation !== "" ? `+ ${tier1Modifier.abbreviation}`: "";
+    const tier2ModifierBonusText = tier2Modifier.abbreviation !== "" ? `+ ${tier2Modifier.abbreviation}`: "";
+    const tier3ModifierBonusText = tier3Modifier.abbreviation !== "" ? `+ ${tier3Modifier.abbreviation}`: "";
+
+    console.log(tier1_damage);
+    if (tier1_damage != 0) {
+      tier1DamageText = tier1_damage + `${tier1KitDamageBonusText} ${tier1ModifierBonusText}`.trimEnd() + ` ${tier1_type} damage;`;
+    }
+
+    if (tier2_damage != 0) {
+      tier2DamageText = tier2_damage + `${tier2KitDamageBonusText} ${tier2ModifierBonusText}`.trimEnd() + ` ${tier2_type} damage;`;
+    }
+
+    if (tier3_damage != 0) {
+      tier3DamageText = tier3_damage + `${tier3KitDamageBonusText} ${tier3ModifierBonusText}`.trimEnd() + ` ${tier3_type} damage;`;
+    }
+
+    var tier1Row = `<tr><td style=width:20% id=tier1>Tier1: </td><td id=tier1_damage><strong> ${tier1DamageText} ${tier1_extra}</strong></td></tr>`;
+    var tier2Row = `<tr><td style=width:20% id=tier2>Tier2: </td><td id=tier2_damage><strong> ${tier2DamageText} ${tier2_extra}</strong></td></tr>`;
+    var tier3Row = `<tr><td style=width:20% id=tier3>Tier3: </td><td id=tier3_damage><strong> ${tier3DamageText} ${tier3_extra}</strong></td></tr>`;
+
+    if (rollType != 'none') {
+      html += `<hr>`;
+      html += `<div>`;
+      html += `<table>`;
+      html +=  tier1Row;
+      html +=  tier2Row;
+      html +=  tier3Row;
+      html += `</table>`;
+      html += `</div>`;
+    }
+
+// Add effect text if available
+    if (title1 !== "") {
+      html += `<div><strong>${title1}:</strong> ${text1}</div>`;
+    }
+
+    if (title2 !== "") {
+      html += `<div><strong>${title2}:</strong> ${text2}</div>`;
+    }
+
+// Add roll button if necessary
+    var costText = cost > 0 ? `(${cost})` : '';
+    var flags = {};
+
+    if (!hasPowerRoll) {
+      var abilityModifier = 0;
+      switch (roll_modifier) {
+        case ("Might"):
+          abilityModifier = might;
+          break;
+        case ("Agility"):
+          abilityModifier = agility;
+          break;
+        case ("Reason"):
+          abilityModifier = reason;
+          break;
+        case ("Intuition"):
+          abilityModifier = intuition;
+          break;
+        case ("Presence"):
+          abilityModifier = presence;
+          break;
+      }
+
+      var tier_1_totalDamage = parseInt(tier1_damage) + parseInt(tier1KitDamageBonus) + parseInt(tier1Modifier.modifier);
+      var tier_2_totalDamage = parseInt(tier2_damage) + parseInt(tier2KitDamageBonus) + parseInt(tier2Modifier.modifier);
+      var tier_3_totalDamage = parseInt(tier3_damage) + parseInt(tier3KitDamageBonus) + parseInt(tier3Modifier.modifier);
+
+      flags = {
+        abilityRoller: {
+          characteristic: roll_modifier,
+          abilityModifier: parseInt(abilityModifier),
+          damage: {tier_1: tier_1_totalDamage, tier_2: tier_2_totalDamage, tier_3: tier_3_totalDamage},
+        }
+      };
+
+      html += `<hr><button id="rollButton">Roll!</button>`;
+    }
+
+// Construct the chat message
+    let messageData = {
+      flavor: `<h2><strong>${name} ${costText}</h2></strong>`,
+      user: game.user._id,
+      speaker: {
+        alias: actorName,
+        actor: game.actors.getName(actorName)
+      },
+      flags: flags,
+      content: html
+    };
+
+    if (rollMode === "gmroll" || rollMode === "blindroll" || rollMode === "selfroll") {
+      messageData.whisper = gmUserIds;
+    } else if (rollMode === "publicroll") {
+      messageData.whisper = [];
+    }
+
+    ChatMessage.create(messageData);
   }
   
   async importCreature(entity) {

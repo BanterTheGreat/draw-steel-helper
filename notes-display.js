@@ -19,7 +19,6 @@ export class NotesDisplay {
     
     static onUpdateToken(token, data, options, userId) {
         if (data?.flags && data.flags["token-notes"]) {
-            console.error(token);
             // Get all the tokens because there can be two tokens of the same linked actor.
             const tokens = canvas.tokens?.placeables.filter((canvasToken) => canvasToken?.actor?.id === token.actorId);
             // Call the _handleOverlay method for each token.
@@ -28,7 +27,6 @@ export class NotesDisplay {
     }
     
     get gridScale() {
-        console.log(canvas.scene.dimensions.size);
         return canvas.scene.dimensions.size / 100;
     }
     
