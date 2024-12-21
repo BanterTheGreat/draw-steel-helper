@@ -453,9 +453,9 @@ export class AbilityHelper {
     const tier1_extra = linkedEntity.system.props.mcdm_action_low_text;
     const tier2_extra = linkedEntity.system.props.mcdm_action_mid_text;
     const tier3_extra = linkedEntity.system.props.mcdm_action_high_text;
-    const tier1_damage_modifier = linkedEntity.system.props.mcdm_action_damage_low_modifier;
-    const tier2_damage_modifier = linkedEntity.system.props.mcdm_action_damage_mid_modifier;
-    const tier3_damage_modifier = linkedEntity.system.props.mcdm_action_damage_high_modifier;
+    const tier1_damage_modifier = linkedEntity.system.props.mcdm_action_damage_low_modifier ?? "None";
+    const tier2_damage_modifier = linkedEntity.system.props.mcdm_action_damage_mid_modifier ?? "None";
+    const tier3_damage_modifier = linkedEntity.system.props.mcdm_action_damage_high_modifier ?? "None";
     const distance = linkedEntity.system.props.mcdm_action_distance;
     const target = linkedEntity.system.props.mcdm_action_target;
     const type = linkedEntity.system.props.mcdm_action_type;
