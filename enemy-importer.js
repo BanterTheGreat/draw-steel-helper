@@ -75,7 +75,6 @@ export class EnemyImporter {
                 diceBonus: null,
                 malice: 0,
                 isSignature: false,
-                resistanceRollCharacteristic: "",
                 keywords: "",
                 distance: "",
                 target: "",
@@ -101,13 +100,34 @@ export class EnemyImporter {
         ability.data.diceBonus = diceBonusMatch ? diceBonusMatch[0].replace("2d10 + ", "") : null;
         ability.data.malice = maliceMatch ? parseInt(maliceMatch[1]) : 0;
         ability.data.isSignature = lines[currentIndex].includes("Signature");
-        ability.data.resistanceRollCharacteristic = resistanceRollCharacteristicMatch ? resistanceRollCharacteristicMatch[1] : "";
         currentIndex += 1;
         
         // Keywords
-        const keywordsLine = lines[currentIndex];
-        const keywordsMatch = keywordsLine.match(/Keywords (.*)/);
-        ability.data.keywords = keywordsMatch ? keywordsMatch[1] : '';
+        const keywordsMatch = lines[currentIndex].match(/Keywords (.*)/);
+        
+        if (keywordsMatch) {
+            ability.data.keywords = keywordsMatch ? keywordsMatch[1] : '';
+        }
+        else if (ability.data.actionType === "Free Maneuver") {
+            // Free maneuver without matches: We assume we only have text, we will parse this as the first effect it has!.
+            console.log("PARSER: Found a Free Maneuver containing only text");
+            ability.data.effects.push({ header: "Effect", effect: "" });
+            for (currentIndex; currentIndex < lines.length; currentIndex++) {
+                if (lines[currentIndex] === "") {
+                    break;
+                }
+                
+                // We just add all text we find to the first effect of the ability.
+                let concatToken = ability.data.effects[0].effect === "" ? "" : " ";
+                ability.data.effects[0].effect = ability.data.effects[0].effect.concat(concatToken, lines[currentIndex]);
+            }
+
+            ability.finalIndex = currentIndex ?? lines.length;
+            return ability;
+        }
+        else {
+            throw `Something went wrong with parsing. Expected either Keywords or Free Maneuver. Instead got ${lines[currentIndex]}`
+        }
 
         currentIndex += 1;
         
@@ -148,51 +168,55 @@ export class EnemyImporter {
             throw `Something went wrong with parsing. Expected either Distance/Target or Trigger. Instead got ${lines[currentIndex]}`
         }
         
-        // We got a roll bonus or we are a resistance roll, so we got a roll.
-        if (ability.data.diceBonus !== null || ability.data.resistanceRollCharacteristic !== "") {
-            if (ability.data.diceBonus !== null) {
-                // Tier 1;
-                ability.data.tier1 = this.parseTier(lines, currentIndex, ['★', '✸']);
-                // Tier 2;
-                ability.data.tier2 = this.parseTier(lines, ability.data.tier1.finalIndex, ['✸']);
-                // Tier 3;
-                ability.data.tier3 = this.parseTier(lines, ability.data.tier2.finalIndex, ['Effect', 'Malice']);
-                currentIndex = ability.data.tier3.finalIndex;  
-            }
-            else if (ability.data.resistanceRollCharacteristic !== "") {
-                // Tier 1;
-                ability.data.tier1 = this.parseTier(lines, currentIndex, ['★', '✦']);
-                // Tier 2;
-                ability.data.tier2 = this.parseTier(lines, ability.data.tier1.finalIndex, ['✦']);
-                // Tier 3;
-                ability.data.tier3 = this.parseTier(lines, ability.data.tier2.finalIndex, ['Effect', 'Malice']);
-                currentIndex = ability.data.tier3.finalIndex;
+        const parseEffects = () => {
+            for (currentIndex; currentIndex < lines.length; currentIndex++) {
+                if (lines[currentIndex] === "") {
+                    break;
+                }
+
+                // We spot power roll icons. We are done with effects.
+                if (lines[currentIndex].includes("★") || lines[currentIndex].includes("✦") || lines[currentIndex].includes("✸")) {
+                    break;
+                }
+
+                // Check if the sentence begins with Effect or a malice cost.
+                let match = lines[currentIndex].match(this.effectRegex);
+
+                // Beginning of effect
+                if (match) {
+                    effectIndex += 1;
+                    let header = match[1];
+                    let effect = match[3].trim();
+                    ability.data.effects.push({ header: header, effect: effect  })
+                    continue;
+                }
+
+                // Not a match? Must be continuing last effect.
+                ability.data.effects[effectIndex].effect = ability.data.effects[effectIndex].effect.concat(" ", lines[currentIndex]);
             }
         }
-        
+
         let effectIndex = -1;
+        console.log("PARSER: Parsing effects before the power roll.")
+        // Sometimes, effects are before the power roll. Very very annoying.
+        parseEffects();
+
+        
+        // We got a roll bonus or we are a resistance roll, so we got a roll.
+        console.log("PARSER: Parsing the power roll.")
+        if (ability.data.diceBonus !== null) {
+            // Tier 1;
+            ability.data.tier1 = this.parseTier(lines, currentIndex, ['★', '✦', '✸']);
+            // Tier 2;
+            ability.data.tier2 = this.parseTier(lines, ability.data.tier1.finalIndex, ['★', '✦', '✸']);
+            // Tier 3;
+            ability.data.tier3 = this.parseTier(lines, ability.data.tier2.finalIndex, ['Effect', 'Malice']);
+            currentIndex = ability.data.tier3.finalIndex;  
+        }
         
         // Get the remaining effects.
-        for (currentIndex; currentIndex < lines.length; currentIndex++) {
-            if (lines[currentIndex] === "") {
-                break;
-            }
-            
-            // Check if the sentence begins with Effect or a malice cost.
-            let match = lines[currentIndex].match(this.effectRegex);
-            
-            // Beginning of effect
-            if (match) {
-                effectIndex += 1;
-                let header = match[1];
-                let effect = match[3].trim();
-                ability.data.effects.push({ header: header, effect: effect  })
-                continue;
-            }
-            
-            // Not a match? Must be continuing last effect.
-            ability.data.effects[effectIndex].effect = ability.data.effects[effectIndex].effect.concat(" ", lines[currentIndex]);
-        }
+        console.log("PARSER: Parsing effects after the power roll.")
+        parseEffects();
         
         ability.finalIndex = currentIndex ?? lines.length;
         
@@ -212,7 +236,7 @@ export class EnemyImporter {
             // We have reached the end of our damage section. Quit.
             endWhenPresent.forEach(end =>
             {
-                if (line.includes(end)) {
+                if (line.includes(end) && i !== beginIndex) {
                     exit = true;
                 }
             });
@@ -315,7 +339,7 @@ export class EnemyImporter {
             creature.type = header[3].trim();
 
             // Traits and EV
-            const traitAndEV = lines[1].match(/^(.*?)(?:\sEV\s)(\d+)$/);
+            const traitAndEV = lines[1].match(/^(.*?)(?:\sEV\s)(\d+)(?:\s.*)?$/);
             creature.traits = traitAndEV[1].trim();
             creature.ev = parseInt(traitAndEV[2]);
 

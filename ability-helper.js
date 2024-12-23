@@ -339,12 +339,11 @@ export class AbilityHelper {
       }
     }
 
-    const tier1KitDamageBonusText = tier1KitDamageBonus != 0 ? `+ ${tier1KitDamageBonus}`: "";
-    const tier2KitDamageBonusText = tier2KitDamageBonus != 0 ? `+ ${tier2KitDamageBonus}`: "";
-    const tier3KitDamageBonusText = tier3KitDamageBonus != 0 ? `+ ${tier3KitDamageBonus}`: "";
+    const tier1KitDamageBonusText = tier1KitDamageBonus != 0 ? ` + ${tier1KitDamageBonus} `: "";
+    const tier2KitDamageBonusText = tier2KitDamageBonus != 0 ? ` + ${tier2KitDamageBonus} `: "";
+    const tier3KitDamageBonusText = tier3KitDamageBonus != 0 ? ` + ${tier3KitDamageBonus} `: "";
 
     const GetModifier = (type) => {
-      console.log(type);
       switch (type) {
         case "Might":
           return {abbreviation: "M"};
@@ -399,7 +398,6 @@ export class AbilityHelper {
         !!keywords & !collapsed ? html += `<div><b>Keywords:</b> ${keywords}<br></div>` : '';
         html += `<div>${targetHtml}<br></div>`;
         !!trigger ? html +=  `<div><b>Trigger:</b> ${trigger}<br></div>` : '';
-        html += rollType == 'resistance' ? `<div><i>Resistance Roll</i></div>` : '';
       html += `</div>`;
     }
     
@@ -462,13 +460,15 @@ export class AbilityHelper {
     const keywords = linkedEntity.system.props.mcdm_action_keywords;
     const cost = linkedEntity.system.props.mcdm_action_cost;
     const roll_modifier = linkedEntity.system.props.mcdm_action_modifier;
-    const might = entity.entity.system.props.mcdm_might ?? 0;
+    const might = entity.entity.system.props.mcdm_might ?? 0; // HACK OH MY GOD. When we don't have stats we are actually an NPC. NPC attacks use 
     const agility = entity.entity.system.props.mcdm_agility ?? 0;
     const reason = entity.entity.system.props.mcdm_reason ?? 0;
     const intuition = entity.entity.system.props.mcdm_intuition ?? 0; 
     const presence = entity.entity.system.props.mcdm_presence ?? 0;
     const trigger = linkedEntity.system.props.mcdm_action_trigger;
     const use_kit = linkedEntity.system.props.mcdm_action_kit;
+    const isEnemy = entity.entity.system.props.mcdm_enemy;
+    
 
     var html = "";
     var hasPowerRoll = rollType != 'power';
@@ -492,15 +492,15 @@ export class AbilityHelper {
     html += '<span style="display:none;">ROLL_DATA</span>';
 
     // Begin the table creation for damage rolls
-    var tier1KitDamageBonus = 0;
-    var tier2KitDamageBonus = 0;
-    var tier3KitDamageBonus = 0;
+    let tier1KitDamageBonus = 0;
+    let tier2KitDamageBonus = 0;
+    let tier3KitDamageBonus = 0;
 
-    var tier1DamageText = '';
-    var tier2DamageText = '';
-    var tier3DamageText = '';
+    let tier1DamageText = '';
+    let tier2DamageText = '';
+    let tier3DamageText = '';
 
-    if (use_kit === "true") {
+    if (use_kit === true) {
       switch (attack_type) {
         case ("melee"):
           tier1KitDamageBonus = tier1_melee;
@@ -514,10 +514,10 @@ export class AbilityHelper {
           break;
       }
     }
-
-    const tier1KitDamageBonusText = tier1KitDamageBonus != 0 ? `+ ${tier1KitDamageBonus}`: "";
-    const tier2KitDamageBonusText = tier2KitDamageBonus != 0 ? `+ ${tier2KitDamageBonus}`: "";
-    const tier3KitDamageBonusText = tier3KitDamageBonus != 0 ? `+ ${tier3KitDamageBonus}`: "";
+    
+    const tier1KitDamageBonusText = tier1KitDamageBonus != 0 ? ` + ${tier1KitDamageBonus} `: "";
+    const tier2KitDamageBonusText = tier2KitDamageBonus != 0 ? ` + ${tier2KitDamageBonus} `: "";
+    const tier3KitDamageBonusText = tier3KitDamageBonus != 0 ? ` + ${tier3KitDamageBonus} `: "";
     
     const GetModifier = (type) => {
       switch (type) {
@@ -540,11 +540,10 @@ export class AbilityHelper {
     const tier2Modifier = GetModifier(tier2_damage_modifier);
     const tier3Modifier = GetModifier(tier3_damage_modifier);
     
-    const tier1ModifierBonusText = tier1Modifier.abbreviation !== "" ? `+ ${tier1Modifier.abbreviation}`: "";
-    const tier2ModifierBonusText = tier2Modifier.abbreviation !== "" ? `+ ${tier2Modifier.abbreviation}`: "";
-    const tier3ModifierBonusText = tier3Modifier.abbreviation !== "" ? `+ ${tier3Modifier.abbreviation}`: "";
+    const tier1ModifierBonusText = tier1Modifier.modifier !== 0 ? `+ ${tier1Modifier.modifier}`: "";
+    const tier2ModifierBonusText = tier2Modifier.modifier !== 0 ? `+ ${tier2Modifier.modifier}`: "";
+    const tier3ModifierBonusText = tier3Modifier.modifier !== 0 ? `+ ${tier3Modifier.modifier}`: "";
 
-    console.log(tier1_damage);
     if (tier1_damage != 0) {
       tier1DamageText = tier1_damage + `${tier1KitDamageBonusText} ${tier1ModifierBonusText}`.trimEnd() + ` ${tier1_type} damage;`;
     }
@@ -612,7 +611,7 @@ export class AbilityHelper {
       flags = {
         abilityRoller: {
           characteristic: roll_modifier,
-          abilityModifier: parseInt(abilityModifier),
+          abilityModifier: isEnemy ? linkedEntity.system.props.mcdm_action_roll_bonus : parseInt(abilityModifier),
           damage: {tier_1: tier_1_totalDamage, tier_2: tier_2_totalDamage, tier_3: tier_3_totalDamage},
         }
       };

@@ -86,7 +86,7 @@ export class MappingUtilities {
                         mcdm_action_mid_text: ability.tier2?.result?.effect ?? "",
                         mcdm_action_high_text: ability.tier3?.result?.effect ?? "",
                         mcdm_action_keywords: ability.keywords,
-                        mcdm_action_modifier: this.getModifier(ability),
+                        // mcdm_action_modifier: this.getModifier(ability), - Unused for Npcs.
                         mcdm_action_kit: false,
                         mcdm_action_roll_bonus: ability.diceBonus,
                         mcdm_action_roll_type: this.getRollType(ability),
@@ -111,27 +111,8 @@ export class MappingUtilities {
     getRollType(ability) {
        if (ability.diceBonus) {
            return "power";
-       } 
-       
-       if (ability.resistanceRollCharacteristic !== "") {
-           return "resistance";
        }
        
        return "none";
-    }
-    
-    getModifier(ability) {
-        switch (ability.resistanceRollCharacteristic) {
-            case "PRS":
-                return "Presence";
-            case "AGL":
-                return "Agility";
-            case "MGT":
-                return "Might";
-            case "INU":
-                return "Intuition";
-            case "REA":
-                return "Reason";
-        }
     }
 }
