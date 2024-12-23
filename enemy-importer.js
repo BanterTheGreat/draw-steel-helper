@@ -313,6 +313,7 @@ export class EnemyImporter {
             stamina: null,
             immunities: null,
             weaknesses: null,
+            withCaptain: null,
             speed: null,
             size: null,
             stability: null,
@@ -364,10 +365,12 @@ export class EnemyImporter {
             creature.stability = stabilityMatch ? parseInt(stabilityMatch[1]) : 0;
 
             // Free Strike
-            const freeStrikeSection = lines[4];
-            const freeStrikeMatch = freeStrikeSection.match(/Free Strike (\d+)/);
-
+            const freeStrikeAndCaptainLine = lines[4];
+            const freeStrikeMatch = freeStrikeAndCaptainLine.match(/Free Strike (\d+)/);
+            const withCaptainMatch = freeStrikeAndCaptainLine.match(/(?<=With Captain\s).*?(?=\sFree Strike|\n|$)/);
+            
             creature.freeStrike = freeStrikeMatch ? parseInt(freeStrikeMatch[1]) : 0;
+            creature.withCaptain = withCaptainMatch ? withCaptainMatch[0] : null;
 
             // Characteristics
             const characteristics = lines[5];

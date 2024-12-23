@@ -12,10 +12,14 @@ export class MappingUtilities {
         }
         
         const actorData = {
+            prototypeToken: {
+                name: this.capitalizeFirstCharOfWord(importJson.name),
+            },
+            name: this.capitalizeFirstCharOfWord(importJson.name),
             system: {
                 props: {
                     mcdm_size:  importJson.size,
-                    mcdm_type:  importJson.type,
+                    mcdm_type:  this.capitalizeFirstCharOfWord(importJson.type),
                     mcdm_traits:  importJson.traits,
                     mcdm_weaknesses:  importJson.weaknesses,
                     mcdm_immunities:  importJson.immunities,
@@ -30,6 +34,7 @@ export class MappingUtilities {
                     mcdm_intuition:  importJson.characteristics.intuition,
     
                     mcdm_free_strike:  importJson.freeStrike,
+                    mcdm_captain_bonus: importJson.withCaptain,
                     mcdm_speed:  importJson.speed,
                     mcdm_stability: importJson.stability,
                     mcdm_stamina_current: importJson.stamina,
@@ -106,6 +111,14 @@ export class MappingUtilities {
     
     capitalizeFirstCharInString(str) {
         return str.charAt(0).toUpperCase() + str.slice(1);
+    }
+    
+    capitalizeFirstCharOfWord(str) {
+        return str
+            .toLowerCase() // Convert the whole string to lowercase
+            .split(" ")    // Split the string into an array of words
+            .map(word => word.charAt(0).toUpperCase() + word.slice(1)) // Capitalize the first letter
+            .join(" ");
     }
     
     getRollType(ability) {
