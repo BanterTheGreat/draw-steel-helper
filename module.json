@@ -5,7 +5,7 @@
 	"version": "1.0.0",
 	"authors": ["Banter"],
 	"system": ["custom-system-builder"],
-  "esmodules": ["ability-helper.js", "enemy-importer.js", "resource-helper.js", "system-helper.js", "notes-display.js", "main.js"],
+  "esmodules": ["ability-helper.js", "enemy-importer.js", "resource-helper.js", "system-helper.js", "main.js"],
   "socket": true,
 	"minimumCoreVersion": "0.9.0",
 	"compatibleCoreVersion": "0.9.0"
