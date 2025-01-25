@@ -2,7 +2,6 @@ import { AbilityHelper } from "./ability-helper.js";
 import { ResourceHelper } from "./resource-helper.js";
 import { SystemHelper } from "./system-helper.js";
 import {SocketHelper} from "./socket-helper.js";
-import {NotesDisplay} from "./notes-display.js";
 
 const abilityHelper = new AbilityHelper();
 const socketHelper = new SocketHelper();
@@ -23,16 +22,6 @@ Hooks.on("updateCombat", ResourceHelper.rollResourceGainOnTurnStart);
 Hooks.on("combatRound", ResourceHelper.getMaliceOnRoundStart);
 Hooks.on("combatStart", ResourceHelper.getMaliceOnRoundStart);
 
-// Notes
-Hooks.on("setup", () => {
-    game.notesDisplay = new NotesDisplay();
-})
-
-Hooks.on("refreshToken", NotesDisplay.refreshToken);
-Hooks.on("updateActor", NotesDisplay.onUpdateActor);
-Hooks.on("canvasReady", NotesDisplay.onCanvasReady);
-Hooks.on("updateToken", NotesDisplay.onUpdateToken)
-
 // Add functionalities to the chat buttons.
 Hooks.on("renderChatMessage", async (message, html) => {
   if (message.flags.applyDamage) {
@@ -43,6 +32,13 @@ Hooks.on("renderChatMessage", async (message, html) => {
         abilityHelper.applyDamage(message);
         // await message.update({content: "This is a test"});
     });
+    html.find("button#halfDamageButton")
+        .off()
+        .on("click", async (evt) => {
+          evt.preventDefault();
+          abilityHelper.applyDamage(message, true);
+          // await message.update({content: "This is a test"});
+      });
 
     // Annoyingly, the message contains both flags but we only really want to apply one.
     return;

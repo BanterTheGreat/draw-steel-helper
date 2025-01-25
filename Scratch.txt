@@ -1,51 +1,48 @@
 ${
-        ?{heal:"Heal:"[number]}
+    ?{heal:"Heal:"[number]}
+    ?{temp:"Temp?"[check]}
 }$
 
 %{
     if (${mcdm_stamina_current}$ < ${mcdm_stamina_max}$) {
-    return game.macros.getName('Stamina Change').execute({
-        name:'${escapeQuotes(name)}$',
-        recovery_spent:false,
-        damage_start:0,
-        damage_final:0,
-        heal:${heal}$,
-        heal_temp:0,
-        stamina_start:${mcdm_stamina_current}$,
-        stamina_winded:${mcdm_stamina_winded}$,
-        stamina_max:${mcdm_stamina_max}$
-})
-}
+        return game.macros.getName('Stamina Change').execute({
+            name:'${escapeQuotes(name)}$',
+            recovery_spent:false,
+            damage_start:0,
+            damage_final:0,
+            heal:${temp ? 0 : heal}$,
+            heal_temp:${temp ? heal : 0}$,
+            stamina_start:${mcdm_stamina_current}$,
+            stamina_winded:${mcdm_stamina_winded}$,
+            stamina_max:${mcdm_stamina_max}$
+        })
+    }
 }%
 
+${temp ? setPropertyInEntity('self', 'mcdm_stamina_temp', max(abs(heal), mcdm_stamina_temp)) : setPropertyInEntity('self', 'mcdm_stamina_current', min(mcdm_stamina_current+abs(heal), mcdm_stamina_max))}$
+
+
 ${
-    setPropertyInEntity('self', 'mcdm_stamina_current', min(mcdm_stamina_current+abs(heal),mcdm_stamina_max))
+?{heal:"Heal:"[number]}
+?{temp:"Temp?"[check]}
 }$
 
-
-----
-
 %{
-    if (${mcdm_stamina_current}$ < ${mcdm_stamina_max}$ && ${mcdm_recoveries_current}$ > 0) {
-    return game.macros.getName('Stamina Change').execute({
-        name:'${escapeQuotes(name)}$',
-        recovery_spent:true,
-        damage_start:0,
-        damage_final:0,
-        heal:${mcdm_recovery_value}$,
-        heal_temp:0,
-        stamina_start:${mcdm_stamina_current}$,
-        stamina_winded:${mcdm_stamina_winded}$,
-        stamina_max:${mcdm_stamina_max}$
+if (${mcdm_stamina_current}$ < ${mcdm_stamina_max}$) {
+return game.macros.getName('Stamina Change').execute({
+name:'${escapeQuotes(name)}$',
+recovery_spent:false,
+damage_start:0,
+damage_final:0,
+heal:${heal}$,
+heal_temp:0,
+stamina_start:${mcdm_stamina_current}$,
+stamina_winded:${mcdm_stamina_winded}$,
+stamina_max:${mcdm_stamina_max}$
 })
 }
 }%
 
 ${
-    (mcdm_recoveries_current > 0) ? (
-        (mcdm_stamina_current < mcdm_stamina_max) ? (
-                setPropertyInEntity('self', 'mcdm_recoveries_current', max(mcdm_recoveries_current-1,0))
-            setPropertyInEntity('self', 'mcdm_stamina_current', min(mcdm_stamina_current+mcdm_recovery_value,mcdm_stamina_max))
-    ) : notify('warn','Stamina already at Max')
-) : notify('error','No recoveries remaining!')
+setPropertyInEntity('self', 'mcdm_stamina_current', min(mcdm_stamina_current+abs(heal),mcdm_stamina_max))
 }$

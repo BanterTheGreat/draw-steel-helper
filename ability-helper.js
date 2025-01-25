@@ -158,11 +158,17 @@ export class AbilityHelper {
 
             const damages = [damage.tier_1, damage.tier_2, damage.tier_3];
             const damageToTake = damages[tier - 1];
-            
-            const damageText = damageToTake + (surges === 0 ? "" : (" + " + (surges * 2) + ` (${surges} surges)`));
+
+            const damageText = damageToTake + (2 * surges) + (surges === 0 ? "" : ` (${surges} surges)`);
+            const halfDamageText = Math.floor((damageToTake + (2 * surges)) / 2) + (surges === 0 ? "" : ` (${surges} surges)`);
 
             if (!!damageToTake && damageToTake > 0) {
-              newContent += `<hr><button id="damageButton">Take ${damageText} damage</button>`;
+              newContent += 
+                  `<hr>
+                    <div style="display: flex">
+                        <button id="damageButton">Take ${damageText} damage</button>
+                        <button id="halfDamageButton">Take ${halfDamageText} damage</button>
+                      </div>`;
             } 
 
             await socket.executeAsGM("updateMessage", message.id, {...message, content: newContent, flags: { applyDamage: damageToTake + (2 * surges) }});
@@ -179,11 +185,11 @@ export class AbilityHelper {
     }).render(true);
   }
 
-  applyDamage(message) {
+  applyDamage(message, halved = false) {
     const userCharacter = game.user.character;
     const controlledTokens = canvas.tokens.controlled;
     let actorsToDamage = [];
-    let damage = message.flags.applyDamage;
+    let damage = halved ? Math.floor(message.flags.applyDamage / 2) : message.flags.applyDamage;
 
     if (controlledTokens.length > 0) {
       // actor.system.props;
